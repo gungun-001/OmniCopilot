@@ -1,0 +1,30 @@
+# Node
+node_modules/
+.next/
+dist/
+build/
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Mobile / OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project-specific
+backend/token.json
+backend/omni_copilot.db
+!backend/.env.example
