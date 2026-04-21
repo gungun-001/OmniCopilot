@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { AnimatePresence, motion } from 'framer-motion';
 
-export default function ChatLayout({ children }: { children: React.ReactNode }) {
+export default function ChatLayout({ children, onLogout }: { children: React.ReactNode, onLogout?: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -25,7 +25,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       <Sidebar isOpen={sidebarOpen} closeSidebar={() => setSidebarOpen(false)} />
       
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} onLogout={onLogout} />
         <main className="flex-1 relative overflow-hidden bg-background">
           {children}
         </main>

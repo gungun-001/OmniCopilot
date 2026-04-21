@@ -24,6 +24,12 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('omni_token');
+    localStorage.removeItem('omni_user');
+    setView('auth');
+  };
+
   return (
     <main className="h-screen w-full bg-background selection:bg-primary/30">
       <AnimatePresence mode="wait">
@@ -34,7 +40,7 @@ export default function Home() {
         )}
 
         {view === 'chat' && (
-          <ChatLayout key="chat">
+          <ChatLayout key="chat" onLogout={handleLogout}>
             <ChatInterface />
           </ChatLayout>
         )}
