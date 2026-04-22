@@ -8,38 +8,49 @@ from googleapiclient.errors import HttpError
 import uuid
 
 # --- Helper to Get Google Service ---
-def get_calendar_service():
-    """Loads credentials from token.json and returns the Google Calendar service."""
+def get_google_credentials():
+    """Helper to load credentials from GOOGLE_TOKEN_JSON env var or local token.json file."""
+    # 1. Try environment variable first (for production/deployment)
+    token_json = os.getenv("GOOGLE_TOKEN_JSON")
+    if token_json:
+        try:
+            creds_data = json.loads(token_json)
+            return Credentials.from_authorized_user_info(creds_data)
+        except Exception as e:
+            print(f"Error loading GOOGLE_TOKEN_JSON from environment: {e}")
+
+    # 2. Fallback to local token.json file
     token_path = os.path.join(os.path.dirname(__file__), "..", "token.json")
-    if not os.path.exists(token_path):
-        return None
-    
-    with open(token_path, "r") as token_file:
-        creds_data = json.load(token_file)
-        creds = Credentials.from_authorized_user_info(creds_data)
+    if os.path.exists(token_path):
+        try:
+            with open(token_path, "r") as token_file:
+                creds_data = json.load(token_file)
+                return Credentials.from_authorized_user_info(creds_data)
+        except Exception as e:
+            print(f"Error loading token.json file: {e}")
+            
+    return None
+
+def get_calendar_service():
+    """Returns the Google Calendar service using available credentials."""
+    creds = get_google_credentials()
+    if creds:
         return build("calendar", "v3", credentials=creds)
+    return None
 
 def get_gmail_service():
-    """Loads credentials from token.json and returns the Gmail service."""
-    token_path = os.path.join(os.path.dirname(__file__), "..", "token.json")
-    if not os.path.exists(token_path):
-        return None
-    
-    with open(token_path, "r") as token_file:
-        creds_data = json.load(token_file)
-        creds = Credentials.from_authorized_user_info(creds_data)
+    """Returns the Gmail service using available credentials."""
+    creds = get_google_credentials()
+    if creds:
         return build("gmail", "v1", credentials=creds)
+    return None
 
 def get_drive_service():
-    """Loads credentials from token.json and returns the Google Drive service."""
-    token_path = os.path.join(os.path.dirname(__file__), "..", "token.json")
-    if not os.path.exists(token_path):
-        return None
-    
-    with open(token_path, "r") as token_file:
-        creds_data = json.load(token_file)
-        creds = Credentials.from_authorized_user_info(creds_data)
+    """Returns the Google Drive service using available credentials."""
+    creds = get_google_credentials()
+    if creds:
         return build("drive", "v3", credentials=creds)
+    return None
 
 # 1. Google Calendar Tool
 @tool
