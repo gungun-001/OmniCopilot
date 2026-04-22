@@ -18,6 +18,7 @@ pypdf
 sqlalchemy
 psycopg2-binary
 passlib[bcrypt]
+bcrypt==3.1.7
 python-jose[cryptography]
 python-multipart
 email-validator
