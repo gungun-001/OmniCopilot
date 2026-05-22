@@ -17,6 +17,7 @@ export default function ChatInterface() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<{ filename: string; content: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -29,24 +30,39 @@ export default function ChatInterface() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && !attachedFile) || isLoading) return;
 
-    const userText = input.trim();
+    const userText = input.trim() || `Analyze the file: ${attachedFile?.filename}`;
     setInput('');
 
+    // Capture the attached file locally so we can clear the state and UI immediately
+    const fileToSend = attachedFile;
+    setAttachedFile(null);
+
     const userMsgId = Date.now().toString();
-    setMessages(prev => [...prev, { id: userMsgId, content: userText, isUser: true }]);
+    
+    // Create visual feedback for the file attachment inside the chat bubble
+    const displayContent = fileToSend
+      ? `📎 **Attached file:** \`${fileToSend.filename}\`\n\n${userText}`
+      : userText;
+
+    setMessages(prev => [...prev, { id: userMsgId, content: displayContent, isUser: true }]);
     setIsLoading(true);
 
     const aiMsgId = (Date.now() + 1).toString();
     setMessages(prev => [...prev, { id: aiMsgId, content: "", isUser: false }]);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
       const response = await fetch(`${apiUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userText, session_id: 'user_123' }),
+        body: JSON.stringify({ 
+          message: userText, 
+          session_id: 'user_123',
+          attached_file_name: fileToSend?.filename || null,
+          attached_file_content: fileToSend?.content || null
+        }),
       });
 
       if (!response.ok) throw new Error("API failed");
@@ -147,6 +163,8 @@ export default function ChatInterface() {
         setInput={setInput}
         handleSubmit={handleSubmit}
         isLoading={isLoading}
+        attachedFile={attachedFile}
+        setAttachedFile={setAttachedFile}
       />
     </div>
   );

@@ -42,9 +42,20 @@ def _make_executor(llm, memory) -> AgentExecutor:
                    "- ALWAYS use the GitHub tool (e.g., get_github_repos) for repository-related queries.\n"
                    "- DO NOT fallback to generic LLM answers for GitHub questions.\n"
                    "- If asked for the latest repository or github link, call get_github_repos, sort by updated_at, and present the most recent one with its GitHub URL beautifully.\n\n"
+                   "## 📧 Professional HTML Email Formatting Rules\n"
+                   "- The `send_email_tool` supports HTML body formatting! Therefore, you MUST draft gorgeous, premium-looking, and corporate-grade HTML emails rather than basic plain text.\n"
+                   "- Use clean inline CSS styles with a modern aesthetic:\n"
+                   "  - Use premium fonts (e.g., family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;).\n"
+                   "  - Create a clean card layout with a white or soft off-white background, subtle border-radius (8px), a light gray outer border, and a shadow feel.\n"
+                   "  - Include a styled top banner or header with a premium deep indigo/navy blue background (`#1e293b` or `#4f46e5`) and white text.\n"
+                   "  - Structure meeting details in a beautiful table or bulleted list with ample padding and modern margins.\n"
+                   "  - For links (especially Google Meet), ALWAYS design a gorgeous, high-contrast, rounded CSS button (e.g., background color: `#4f46e5`, color: `#ffffff`, padding: `12px 24px`, border-radius: `6px`, text-decoration: `none`, display: `inline-block`, font-weight: `bold`) so it looks incredibly premium and invitation-ready.\n"
+                   "  - Conclude with a clear sign-off, signature, and professional footer styling.\n\n"
                    "You can help the user schedule meetings, send emails, read files, send messages to slack/discord, and fetch github files. "
                    "CRITICAL DECISION RULE: Once you have obtained the specific information requested by the user, STOP and provide the answer immediately. Do NOT call more tools if you already have the data.\n\n"
-                   "CRITICAL INSTRUCTION: When scheduling a meeting, NEVER use the send_email_tool afterward! Google Calendar natively sends a highly professional, interactive Calendar Invite to attendees automatically. Instead, just use schedule_meeting_tool, ALWAYS draft a high-quality 'description' parameter explaining the agenda professionally, and then simply tell the user you dispatched the professional native calendar invite natively!"),
+                   "CRITICAL INSTRUCTION FOR MEETINGS & EMAILS:\n"
+                   "- If the user asks to schedule a meeting but does NOT explicitly ask to send an email, use only `schedule_meeting_tool`. Google Calendar will natively invite any attendees.\n"
+                   "- If the user explicitly asks to send an email with the meeting or Google Meet link, you MUST execute this sequentially: first call `schedule_meeting_tool` (or `create_google_meet_tool`) to obtain the real Google Meet link, and once you have the link from the tool's response, call `send_email_tool` in the next turn to send the email containing that link. NEVER call them in parallel or at the same time, as you need the generated link to compose the HTML email body."),
         MessagesPlaceholder(variable_name="chat_history"),
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),

@@ -1,3 +1,5 @@
+from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 from langchain.tools import tool
 import os
 import requests
@@ -15,7 +17,14 @@ def get_google_credentials():
     if token_json:
         try:
             creds_data = json.loads(token_json)
-            return Credentials.from_authorized_user_info(creds_data)
+            creds = Credentials.from_authorized_user_info(creds_data)
+            if creds and creds.expired and creds.refresh_token:
+                try:
+                    creds.refresh(Request())
+                except RefreshError as e:
+                    print(f"Error refreshing GOOGLE_TOKEN_JSON credentials: {e}")
+                    return None
+            return creds
         except Exception as e:
             print(f"Error loading GOOGLE_TOKEN_JSON from environment: {e}")
 
@@ -25,7 +34,27 @@ def get_google_credentials():
         try:
             with open(token_path, "r") as token_file:
                 creds_data = json.load(token_file)
-                return Credentials.from_authorized_user_info(creds_data)
+            creds = Credentials.from_authorized_user_info(creds_data)
+            
+            # Check and refresh token if expired
+            if creds and creds.expired and creds.refresh_token:
+                try:
+                    print("Google Access Token expired. Attempting to refresh...")
+                    creds.refresh(Request())
+                    # Save refreshed credentials back to token.json
+                    with open(token_path, "w") as token_file:
+                        token_file.write(creds.to_json())
+                    print("Successfully refreshed and saved Google credentials.")
+                except RefreshError as e:
+                    print(f"Refresh token is expired or invalid: {e}")
+                    # Delete the invalid token.json so the user can easily regenerate it
+                    try:
+                        os.remove(token_path)
+                        print("Removed invalid token.json file.")
+                    except Exception as remove_error:
+                        print(f"Failed to remove token.json: {remove_error}")
+                    return None
+            return creds
         except Exception as e:
             print(f"Error loading token.json file: {e}")
             
@@ -103,7 +132,7 @@ def schedule_meeting_tool(summary: str, start_time: str, end_time: str, attendee
 # 2. Gmail Tool
 @tool
 def send_email_tool(to_email: str, subject: str, body: str) -> str:
-    """Sends an email via Gmail API."""
+    """Sends an email via Gmail API. Supports HTML body naturally if it contains tags like <html>, <body>, or <p>."""
     import base64
     from email.message import EmailMessage
     
@@ -113,7 +142,13 @@ def send_email_tool(to_email: str, subject: str, body: str) -> str:
         
     try:
         message = EmailMessage()
-        message.set_content(body)
+        
+        # Check if the body contains HTML tags to send it as text/html
+        if any(tag in body for tag in ["<html>", "<body>", "</div>", "<p>", "<br>", "<table"]):
+            message.set_content(body, subtype='html')
+        else:
+            message.set_content(body)
+            
         message['To'] = to_email
         message['From'] = 'me'
         message['Subject'] = subject
